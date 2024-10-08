@@ -8,6 +8,7 @@ class Player {
     this.discardPile = new DiscardPile(); // Each player has their own discard pile
     this.hand = []; // Player's hand (a list of cards)
     this.playArea = new PlayArea(); // Placeholder for the play area
+    this.score = 0; // Player's score (starts at 0)
   }
 
   // Method to draw a card from a deck and add it to the player's hand

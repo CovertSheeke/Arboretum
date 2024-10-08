@@ -2,12 +2,13 @@ import { Deck } from "./piles_of_cards.js";
 import { Player } from "./players.js";
 
 class Game {
-  constructor(playerNames) {
+  constructor(playerNames, verbose = true) {
     this.players = playerNames.map((name) => new Player(name)); // Create players
     this.deck = new Deck(playerNames.length); // Initialize the deck
     this.turnOrder = []; // Holds the order of turns
     this.currentPlayerIndex = 0; // Track whose turn it is
     this.gameOver = false; // Check if the game is over
+    this.verbose = verbose; // Set to false to hide logs
   }
 
   // Initialize the game
@@ -260,6 +261,7 @@ class Game {
     console.log(`Scoring ${player.name}'s play area for the suit ${suit}...`);
     let paths = []; // A list to store valid paths in the player's play area for the given suit
     let maxPoints = 0; // To track the highest score for any path in the suit
+    let bestPath = null; // To store the best path found
 
     // Find all valid paths in the play area for the given suit
     for (let positionKey in player.playArea.grid) {
@@ -273,7 +275,6 @@ class Game {
       }
     }
 
-    // Score each path and retain the highest score
     for (let path of paths) {
       let pathLength = path.length;
       let sameColor = this.checkIfAllSameColor(path); // Check if all cards in the path are the same color
@@ -301,12 +302,21 @@ class Game {
         pathPoints += 2;
       }
 
-      // Update maxPoints if this path has the highest score
+      // Check if this is the best path
       if (pathPoints > maxPoints) {
         maxPoints = pathPoints;
+        bestPath = path; // Track the best path
       }
     }
-    player.score += maxPoints; // Update the player's score
+
+    // Highlight and display the best path
+    if (bestPath) {
+      console.log(`Best path found with score ${maxPoints}:`);
+      this.highlightAndShowPath(bestPath, player.playArea);
+    }
+
+    // Update the player's score
+    player.score += maxPoints;
     return maxPoints; // Return the highest score for the best path
   }
 
@@ -321,37 +331,140 @@ class Game {
     return true; // All cards have the same color
   }
 
-  // Function to get all cards of the same suit from the play area grid
-  getCardsOfSuit(suit, playAreaGrid) {
-    return Object.values(playAreaGrid).filter((card) => card.suit === suit);
-  }
-
-  // Function to find valid paths starting from a given card
-  findPathStartingFromCard(card, playArea) {
-    // Step 1: Get all cards of the same suit as the starting card
+  // Brute-force pathfinding function with verbosity
+  findPathStartingFromCard(startCard, playArea) {
+    let possibleEnds = []; // To store cards that are valid end points
+    let possiblePaths = []; // To store all possible paths
     let playAreaGrid = playArea.grid;
-    let sameSuitCards = this.getCardsOfSuit(card.suit, playAreaGrid);
-
-    // Step 2: Sanity check - if only one card of this suit exists, no valid paths
-    if (sameSuitCards.length <= 1) {
-      return []; // No valid path can be formed with only one card
+    if (this.verbose) {
+      console.log(
+        `Finding paths starting from (${startCard.x}, ${startCard.y})`
+      );
+    }
+    // Step 1: Find all possible end cards in the play area that match the suit and have a higher rank
+    for (let positionKey in playAreaGrid) {
+      if (this.verbose) {
+        console.log(`Checking position: ${positionKey}`);
+      }
+      let card = playAreaGrid[positionKey];
+      if (card.suit === startCard.suit && card.rank > startCard.rank) {
+        possibleEnds.push(card);
+        if (this.verbose) {
+          console.log(
+            `Found possible end card at (${card.x}, ${card.y}) with rank ${card.rank}.`
+          );
+        }
+      }
     }
 
-    // Step 3: Initialize variables for tracking paths
-    let paths = []; // A list to store valid paths
+    if (this.verbose) {
+      console.log(`Total possible end cards: ${possibleEnds.length}`);
+    }
 
-    // Step 4: Recursively build paths using DFS (Depth-First Search)
-    let visited = new Set(); // To track visited cards and avoid loops
-    let initialPath = [card]; // Start the path with the given card
+    // Step 2: For each card in possibleEnds, find all possible paths from the startCard
+    for (let endCard of possibleEnds) {
+      let pathsToEnd = this.findAllPaths(startCard, endCard, playAreaGrid);
+      possiblePaths.push(...pathsToEnd);
+    }
 
-    // Call the recursive path-building function
-    this.explorePaths(card, initialPath, visited, paths, playArea);
+    if (this.verbose) {
+      console.log(`Total possible paths found: ${possiblePaths.length}`);
+    }
 
-    // Step 5: Return the list of valid paths found starting from the card
-    return paths;
+    // Step 3: Filter out illegal paths (paths where rank does not increase as you move)
+    let legalPaths = possiblePaths.filter((path) =>
+      this.checkPathLegality(path)
+    );
+
+    if (this.verbose) {
+      console.log(`Total legal paths: ${legalPaths.length}`);
+    }
+
+    return legalPaths;
   }
 
-  // Recursive helper function to explore valid paths using DFS
+  // Function to find all possible paths from startCard to endCard (with verbosity)
+  findAllPaths(startCard, endCard, playAreaGrid) {
+    const directions = [
+      [1, 0], // Right
+      [-1, 0], // Left
+      [0, 1], // Up
+      [0, -1], // Down
+    ];
+
+    let allPaths = []; // Store all possible paths
+
+    // Recursive function to explore paths
+    const explore = (currentCard, currentPath, visited) => {
+      // If we've reached the endCard, add the current path to allPaths
+      if (currentCard === endCard) {
+        currentPath.push(currentCard);
+        allPaths.push([...currentPath]);
+        if (this.verbose) {
+          console.log(
+            `Found path to end card at (${endCard.x}, ${endCard.y}). Path length: ${currentPath.length}`
+          );
+        }
+        return;
+      }
+
+      visited.add(currentCard); // Mark the current card as visited
+      currentPath.push(currentCard); // Add the current card to the path
+
+      // Explore all adjacent cards
+      for (let [dx, dy] of directions) {
+        const nextCard = this.getCardAt(
+          currentCard.x + dx,
+          currentCard.y + dy,
+          playAreaGrid
+        );
+        if (nextCard && !visited.has(nextCard)) {
+          explore(nextCard, [...currentPath], new Set(visited)); // Recursively explore the next card
+        }
+      }
+
+      // Backtrack: remove the current card from the path and visited set
+      currentPath.pop();
+      visited.delete(currentCard);
+    };
+
+    // Start exploring from the startCard
+    explore(startCard, [], new Set());
+
+    return allPaths;
+  }
+
+  // Function to check if a path is legal (with verbosity)
+  checkPathLegality(path) {
+    for (let i = 0; i < path.length - 1; i++) {
+      if (path[i + 1].rank <= path[i].rank) {
+        if (this.verbose) {
+          console.log(
+            `Path is illegal: card at (${path[i].x}, ${path[i].y}) has rank ${
+              path[i].rank
+            }, next card has rank ${path[i + 1].rank}`
+          );
+        }
+        return false; // Path is illegal if the rank doesn't strictly increase
+      }
+    }
+    if (this.verbose) {
+      console.log(`Path is legal: Length = ${path.length}`);
+    }
+    return true;
+  }
+
+  // Helper function to get the card at a specific position in the play area grid (with verbosity)
+  getCardAt(x, y, playAreaGrid) {
+    const positionKey = `${x},${y}`;
+    const card = playAreaGrid[positionKey] || null;
+    if (this.verbose && card) {
+      console.log(`Card found at (${x}, ${y}) with rank ${card.rank}.`);
+    }
+    return card;
+  }
+
+  // Recursive helper function to explore valid paths using DFS (with verbosity)
   explorePaths(currentCard, currentPath, visited, paths, playArea) {
     let playAreaGrid = playArea.grid;
     visited.add(currentCard); // Mark the current card as visited
@@ -392,8 +505,13 @@ class Game {
           if (adjacentCard.suit === currentPath[0].suit) {
             paths.push(newPath); // Add this path to the list of valid paths
 
-            // Highlight the current path and display it on the grid
-            this.highlightAndShowPath(newPath, playArea);
+            if (this.verbose) {
+              console.log(
+                `Valid path found: ${newPath
+                  .map((c) => `(${c.x}, ${c.y})`)
+                  .join(" -> ")}`
+              );
+            }
           }
 
           // Recursively explore further from the adjacent card
@@ -409,12 +527,6 @@ class Game {
     }
 
     visited.delete(currentCard); // Unmark the card as visited when backtracking
-  }
-
-  // Helper function to get the card at a specific position in the play area
-  getCardAt(x, y, playAreaGrid) {
-    const positionKey = `${x},${y}`;
-    return playAreaGrid[positionKey] || null;
   }
 
   // Function to highlight and show the path in the play area grid

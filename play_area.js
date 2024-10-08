@@ -67,8 +67,7 @@ class PlayArea {
     });
   }
 
-  // Method to display the current state of the grid, dynamically sized +1 in all directions
-  viewGrid() {
+  viewGrid(path = []) {
     if (Object.keys(this.grid).length === 0) {
       console.log("The grid is empty.");
       return;
@@ -100,23 +99,49 @@ class PlayArea {
     // Print the top row of x-coordinates
     let headerRow = "    "; // Start with some padding for y-coordinates on the left
     for (let x = minX; x <= maxX; x++) {
-      headerRow += `${x >= 0 ? " " : ""}${x} `; // Format x-coordinates with padding for positive/negative
+      headerRow += `  ${x >= 0 ? " " : ""}${x}  `; // Adjust the padding for positive/negative numbers
     }
     console.log(headerRow);
 
+    // Print horizontal separator (top border)
+    let topBorder = "   " + "┌" + "────┬".repeat(maxX - minX) + "────┐";
+    console.log(topBorder);
+
     // Print each row, including y-coordinates and cards/empty cells
     for (let y = maxY; y >= minY; y--) {
-      let row = `${y >= 0 ? " " : ""}${y} `; // Print y-coordinate on the left with padding
+      let row = `${y >= 0 ? " " : ""}${y} │`; // Start row with y-coordinate and left border
+
       for (let x = minX; x <= maxX; x++) {
         const card = this.getCard(x, y);
         if (card) {
-          row += this.formatCard(card);
+          // Check if the card is part of the path
+          if (path.includes(card)) {
+            row += ` \x1b[1m${this.formatCard(card)}\x1b[0m │`; // Bold the card if it's in the path
+          } else {
+            row += ` ${this.formatCard(card)} │`; // Print the card with a border
+          }
         } else {
-          row += " . "; // Empty cell
+          row += "  . │"; // Empty cell with consistent width and border
         }
       }
       console.log(row); // Print the row
+
+      // Print row separator (horizontal border)
+      if (y > minY) {
+        let separator = "   " + "├" + "────┼".repeat(maxX - minX) + "────┤";
+        console.log(separator);
+      }
     }
+
+    // Print bottom border
+    let bottomBorder = "   " + "└" + "────┴".repeat(maxX - minX) + "────┘";
+    console.log(bottomBorder);
+  }
+
+  // Helper method to center the card in a 3-character-wide space
+  centerCard(card) {
+    const rankSuit = `${card.rank}${card.suit[0]}`; // Get the rank and first letter of suit
+    return rankSuit.padStart(2).padEnd(3); // Center it in a 3-character-wide space
   }
 
   // Helper method to format a card for the grid display with color

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Scores Histogram</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <style>
+      .stats {
+        font-family: Arial, sans-serif;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>All Scores Histogram</h1>
+    <canvas id="allScoresChart" width="400" height="200"></canvas>
+    <div class="stats" id="allScoresStats"></div>
+
+    <h1>Winning Scores Histogram</h1>
+    <canvas id="winningScoresChart" width="400" height="200"></canvas>
+    <div class="stats" id="winningScoresStats"></div>
+
+    <!-- JavaScript for fetching scores and plotting histograms -->
+    <script type="module">
+      // Function to calculate mean
+      function calculateMean(scores) {
+        const total = scores.reduce((acc, score) => acc + score, 0);
+        return total / scores.length;
+      }
+
+      // Function to calculate range
+      function calculateRange(scores) {
+        return [Math.min(...scores), Math.max(...scores)];
+      }
+
+      // Function to bin the scores into intervals
+      function binScores(scores, binSize) {
+        const bins = {};
+        scores.forEach((score) => {
+          const bin = Math.floor(score / binSize) * binSize; // Determine which bin the score falls into
+          bins[bin] = (bins[bin] || 0) + 1; // Increment the bin count
+        });
+        return bins;
+      }
+
+      // Function to plot a histogram with mean line
+      function plotHistogram(canvasId, bins, label, mean) {
+        const ctx = document.getElementById(canvasId).getContext("2d");
+        const labels = Object.keys(bins); // Bin ranges as x-axis labels
+        const data = Object.values(bins); // Frequencies as y-axis values
+
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: label,
+                data: data,
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Score Range",
+                },
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Frequency",
+                },
+              },
+            },
+            plugins: {
+              annotation: {
+                annotations: {
+                  meanLine: {
+                    type: "line",
+                    xMin: mean,
+                    xMax: mean,
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 2,
+                    borderDash: [6, 6],
+                    label: {
+                      content: `Mean: ${mean.toFixed(2)}`,
+                      enabled: true,
+                      position: "center",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Fetch the scores from the JSON file and process
+      fetch("scores.json")
+        .then((response) => response.json())
+        .then((allScores) => {
+          // Flatten the scores array to get all scores
+          const flattenedScores = allScores.flat();
+
+          // Bin the scores for all players with a bin size of 5
+          const binSize = 1;
+          const binnedScores = binScores(flattenedScores, binSize);
+
+          // Calculate mean and range for all scores
+          const allMean = calculateMean(flattenedScores);
+          const allRange = calculateRange(flattenedScores);
+
+          // Plot histogram for all scores
+          plotHistogram("allScoresChart", binnedScores, "All Scores", allMean);
+          displayStats("allScoresStats", allMean, allRange);
+
+          // Extract winning scores (highest score in each game)
+          const winningScores = allScores.map((scores) => Math.max(...scores));
+
+          // Bin the winning scores with a bin size of 5
+          const binnedWinningScores = binScores(winningScores, binSize);
+
+          // Calculate mean and range for winning scores
+          const winningMean = calculateMean(winningScores);
+          const winningRange = calculateRange(winningScores);
+
+          // Plot histogram for winning scores
+          plotHistogram(
+            "winningScoresChart",
+            binnedWinningScores,
+            "Winning Scores",
+            winningMean
+          );
+          displayStats("winningScoresStats", winningMean, winningRange);
+        })
+        .catch((error) => console.error("Error fetching the scores:", error));
+
+      // Function to display stats (mean and range)
+      function displayStats(elementId, mean, range) {
+        document.getElementById(elementId).innerHTML = `
+        <p><strong>Mean:</strong> ${mean.toFixed(2)}</p>
+        <p><strong>Range:</strong> ${range[0]} - ${range[1]}</p>
+      `;
+      }
+    </script>
+  </body>
+</html>
