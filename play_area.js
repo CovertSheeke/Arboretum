@@ -176,6 +176,18 @@ class PlayArea {
         return coloredCard;
     }
   }
+
+  // Method to return the state of the play area grid
+  getGridState() {
+    // This would return a structured representation of the play area, including card positions
+    return Object.keys(this.grid).map((key) => {
+      let card = this.grid[key];
+      return {
+        position: key, // e.g., "x,y"
+        card: { rank: card.rank, suit: card.suit, color: card.color },
+      };
+    });
+  }
 }
 
 export { PlayArea };

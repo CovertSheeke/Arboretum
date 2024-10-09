@@ -9,6 +9,9 @@ class Game {
     this.currentPlayerIndex = 0; // Track whose turn it is
     this.gameOver = false; // Check if the game is over
     this.verbose = verbose; // Set to false to hide logs
+    this.snapshots = []; // To store snapshots of the game state
+    this.turn = 0; // Track the current turn number
+    this.actions = []; // Store actions taken during the game
   }
 
   // Initialize the game
@@ -53,8 +56,12 @@ class Game {
 
   // Handle a player's turn
   takeTurn() {
+    // Capture the start of the turn
+    this.turn++;
+
     const player = this.getCurrentPlayer();
     console.log(`It is now ${player.name}'s turn.`);
+    this.captureSnapshot(this.turn, player.name, "start");
 
     // Step 1: Player draws two cards (either from the deck, discard piles, or a combination)
     this.drawTwoCards(player);
@@ -67,6 +74,55 @@ class Game {
 
     // Proceed to the next player
     this.nextTurn();
+
+    // Capture the end of the turn
+    this.captureSnapshot(this.turn, player.name, "end");
+  }
+
+  logAction(turn, playerName, action) {
+    this.actions.push({ turn, playerName, action });
+  }
+
+  // Function to capture a snapshot of the current game state
+  captureSnapshot(turn, playerName, stage) {
+    let snapshot = {
+      turn: turn, // Turn number
+      stage: stage, // 'start' or 'end' of turn
+      player: playerName, // Name of the player
+      players: {},
+      deck: {
+        remaining: this.deck.length, // Number of cards left in the deck
+        cards: this.deck.cards.map((card) => ({
+          rank: card.rank,
+          suit: card.suit,
+          color: card.color,
+        })), // Cards in the deck
+      },
+    };
+
+    // Capture each player's hand, discard pile, and play area
+    this.players.forEach((player) => {
+      snapshot.players[player.name] = {
+        hand: player.hand.map((card) => ({
+          rank: card.rank,
+          suit: card.suit,
+          color: card.color,
+        })),
+        discardPile: player.discardPile.cards.map((card) => ({
+          rank: card.rank,
+          suit: card.suit,
+          color: card.color,
+        })),
+        playArea: player.playArea.getGridState(), // Assuming playArea has a method to capture its grid state
+      };
+    });
+
+    // Store the snapshot
+    this.snapshots.push(snapshot);
+
+    if (this.verbose) {
+      console.log(`Captured snapshot for turn ${turn}, stage: ${stage}`);
+    }
   }
 
   drawTwoCards(player) {
@@ -83,8 +139,8 @@ class Game {
 
       // Collect all discard piles from players and filter out empty discard piles
       const discardPilesWithCards = this.players
-        .map((p) => p.discardPile)
-        .filter((pile) => pile.cards.length > 0);
+        .filter((p) => p.discardPile.length > 0) // Filter players with non-empty discard piles
+        .map((p) => ({ player: p.name, discardPile: p.discardPile })); // Keep track of both player name and discard pile
 
       if (discardPilesWithCards.length > 0) {
         availableSources.push("discard");
@@ -103,16 +159,34 @@ class Game {
       if (source === "deck") {
         // Draw from the deck
         player.drawCard(this.deck);
+        this.logAction(this.turn, player.name, [
+          "action:",
+          "draw from deck",
+          "card:",
+          player.hand[player.hand.length - 1],
+        ]);
         cardsDrawn++;
       } else if (source === "discard") {
         // Randomly choose a discard pile that has cards
-        const discardPile =
+        const { player: discardOwner, discardPile } =
           discardPilesWithCards[
             Math.floor(Math.random() * discardPilesWithCards.length)
           ];
-        const card = discardPile.drawCard();
-        console.log(`${player.name} drew a card from a discard pile:`, card);
+
+        const card = discardPile.pop(); // Draw the top card from the discard pile
+        console.log(
+          `${player.name} drew a card from ${discardOwner}'s discard pile:`,
+          card
+        );
         player.hand.push(card);
+        this.logAction(this.turn, player.name, [
+          "action:",
+          "draw from discard",
+          "card:",
+          card,
+          "from",
+          discardOwner,
+        ]);
         cardsDrawn++;
       }
     }
@@ -190,7 +264,7 @@ class Game {
     this.showGameState(); // Display the final state of the game
     this.scoreGame(); // Calculate and display the scores
     const finalScores = this.players.map((player) => player.score);
-    return finalScores;
+    return [finalScores, this.snapshots, this.actions];
   }
 
   compareHands(players, deck) {
