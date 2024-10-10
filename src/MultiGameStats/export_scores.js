@@ -1,4 +1,4 @@
-import { Game } from "../game_logic/game_logic2.js"; // Import the Game class
+import { Game } from "../game_logic/game_logic.js"; // Import the Game class
 import fs from "fs";
 
 // Function to run multiple games
