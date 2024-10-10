@@ -54,3 +54,7 @@ node run_one_game.js
 ```
 
 This will execute a game with two players (Alice and Victor) and display the results in the console.
+
+### Ownership
+
+I did not create the rules or artwork of the Arboretum card game, I merely recreate them here for my own entertainment (and to try to finally win, I never can). All credit to Dan Cassar, Chris Quilliams, Philippe Guérin and Z-Man Games.
