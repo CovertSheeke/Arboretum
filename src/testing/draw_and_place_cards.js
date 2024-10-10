@@ -1,6 +1,6 @@
 // main.js
-import { Deck } from "./piles_of_cards.js"; // Assuming the Deck class is in piles_of_cards.js
-import { Player } from "./players.js"; // Import the Player class
+import { Deck } from "../piles_of_cards.js"; // Assuming the Deck class is in piles_of_cards.js
+import { Player } from "../players.js"; // Import the Player class
 
 // Create a deck for 2 players
 const deck = new Deck(2);

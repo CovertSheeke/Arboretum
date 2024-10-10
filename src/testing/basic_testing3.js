@@ -1,7 +1,7 @@
 // Import necessary classes from your project
-import { Game } from "./game_logic.js";
-import { Player } from "./players.js";
-import { PlayArea } from "./play_area.js";
+import { Game } from "../game_logic.js";
+import { Player } from "../../players.js";
+import { PlayArea } from "../../play_area.js";
 
 // Function to create a horizontal line of cards from rank 1 to 6 of the same suit
 function setupTestPlayArea(player) {
