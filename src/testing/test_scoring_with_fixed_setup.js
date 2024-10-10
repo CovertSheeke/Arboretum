@@ -1,7 +1,7 @@
 // Assuming all functions like `scoreCardsInPlayArea` and `PlayArea` class already exist
-import { Game } from "./game_logic2.js";
-import { Player } from "./players.js";
-import { PlayArea } from "./play_area.js";
+import { Game } from "../game_logic2.js";
+import { Player } from "../players.js";
+import { PlayArea } from "../play_area.js";
 
 // Function to create a horizontal line of cards from rank 1 to 6 of the same suit
 function setupTestPlayArea(player) {

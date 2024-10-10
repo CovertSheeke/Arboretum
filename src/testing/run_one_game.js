@@ -1,6 +1,6 @@
-import { Game } from "./game_logic2.js";
-import { Player } from "./players.js";
-import { PlayArea } from "./play_area.js";
+import { Game } from "../game_logic/game_logic2.js";
+import { Player } from "../game_logic/players.js";
+import { PlayArea } from "../game_logic/play_area.js";
 
 const playerNames = ["Alice", "Victor"];
 const game = new Game(playerNames, false);
