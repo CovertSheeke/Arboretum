@@ -1,7 +1,7 @@
 import { Deck } from "./piles_of_cards.js";
 import { Player } from "./players.js";
 
-class Game {
+export class Game {
   constructor(playerNames, verbose = true) {
     this.players = playerNames.map((name) => new Player(name)); // Create players
     this.deck = new Deck(playerNames.length); // Initialize the deck
@@ -77,6 +77,15 @@ class Game {
 
     // Capture the end of the turn
     this.captureSnapshot(this.turn, player.name, "end");
+
+    // Return the latest game state (after the turn is over)
+    return {
+      players: this.players,
+      deck: this.deck,
+      turn: this.turn,
+      actions: this.actions,
+      snapshots: this.snapshots,
+    };
   }
 
   logAction(turn, playerName, action) {
@@ -242,29 +251,47 @@ class Game {
     }
   }
 
-  // Start the game and manage turns
-  startGame() {
+  // Start the game and manage turns with delay between turns
+  async startGame(updateUI) {
     this.setupGame(); // Setup the game
 
     // Run the game loop until the deck is empty
     while (!this.gameOver) {
+      // Run one turn of the game
       this.takeTurn();
+
+      // Capture game state and update UI
+      updateUI(this.getCurrentGameState());
+
+      // Add delay between turns to simulate real-time updates (1 second here)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Check if the deck is empty after each player's turn
       if (this.deck.cards.length === 0) {
         console.log("The deck is empty. The game is over.");
         this.gameOver = true;
-      } else {
-        // Proceed to the next player's turn
-        this.nextTurn();
       }
+
+      // Move to the next player
+      this.nextTurn();
     }
 
     console.log("Game Over!");
     this.showGameState(); // Display the final state of the game
     this.scoreGame(); // Calculate and display the scores
-    const finalScores = this.players.map((player) => player.score);
-    return [finalScores, this.snapshots, this.actions];
+
+    // Return the final state after the game is over
+    return {
+      finalScores: this.players.map((player) => player.score),
+      snapshots: this.snapshots,
+      actions: this.actions,
+    };
+  }
+
+  getCurrentGameState() {
+    return {
+      gameState: this.snapshots[this.snapshots.length - 1],
+    };
   }
 
   compareHands(players, deck) {
@@ -684,5 +711,3 @@ class Game {
     this.declareWinner(this.players);
   }
 }
-
-export { Game };

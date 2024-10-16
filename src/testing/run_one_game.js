@@ -1,4 +1,4 @@
-import { Game } from "../game_logic/game_logic2.js";
+import { Game } from "../game_logic/game_logic.js";
 import { Player } from "../game_logic/players.js";
 import { PlayArea } from "../game_logic/play_area.js";
 
