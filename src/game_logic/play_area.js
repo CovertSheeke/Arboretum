@@ -1,4 +1,4 @@
-// import chalk from "chalk"; // Import chalk for colored output
+import chalk from "chalk"; // Import chalk for colored output
 
 class PlayArea {
   constructor() {
@@ -58,15 +58,6 @@ class PlayArea {
     return this.grid[positionKey] ? this.grid[positionKey] : null; // Return card or null if not found
   }
 
-  // // Method to display the current state of the grid
-  // viewGrid() {
-  //   console.log("Current Play Area Grid:");
-  //   Object.keys(this.grid).forEach((key) => {
-  //     const card = this.grid[key];
-  //     console.log(`Position (${card.x}, ${card.y}):`, card);
-  //   });
-  // }
-
   viewGrid(path = []) {
     if (Object.keys(this.grid).length === 0) {
       console.log("The grid is empty.");
@@ -104,9 +95,7 @@ class PlayArea {
     console.log(headerRow);
 
     // Print horizontal separator (top border)
-    // let topBorder = "   " + "┌" + "────┬".repeat(maxX - minX) + "────┐";
-
-    let topBorder = "   ┌────┬".repeat(maxX - minX) + "────┐";
+    let topBorder = "   " + "┌" + "────┬".repeat(maxX - minX) + "────┐";
     console.log(topBorder);
 
     // Print each row, including y-coordinates and cards/empty cells
@@ -130,13 +119,13 @@ class PlayArea {
 
       // Print row separator (horizontal border)
       if (y > minY) {
-        let separator = "   ├────┼".repeat(maxX - minX) + "────┤";
+        let separator = "   " + "├" + "────┼".repeat(maxX - minX) + "────┤";
         console.log(separator);
       }
     }
 
     // Print bottom border
-    let bottomBorder = "   └────┴".repeat(maxX - minX) + "────┘";
+    let bottomBorder = "   " + "└" + "────┴".repeat(maxX - minX) + "────┘";
     console.log(bottomBorder);
   }
 
@@ -146,65 +135,39 @@ class PlayArea {
     return rankSuit.padStart(2).padEnd(3); // Center it in a 3-character-wide space
   }
 
-  // // Helper method to format a card for the grid display with color
-  // formatCard(card) {
-  //   const suitLetter = card.suit[0]; // First letter of the suit
-  //   const rank = card.rank;
-  //   const color = card.color.toLowerCase();
-
-  //   let coloredCard = `${rank}${suitLetter}`;
-  //   // switch (color) {
-  //   //   case "yellow":
-  //   //     return chalk.yellow(coloredCard);
-  //   //   case "pink":
-  //   //     return chalk.hex("#FFC0CB")(coloredCard); // Chalk doesn't have default pink
-  //   //   case "white":
-  //   //     return chalk.white(coloredCard);
-  //   //   case "orange":
-  //   //     return chalk.hex("#FFA500")(coloredCard); // Chalk doesn't have default orange
-  //   //   case "purple":
-  //   //     return chalk.magenta(coloredCard);
-  //   //   case "red":
-  //   //     return chalk.red(coloredCard);
-  //   //   case "dark grey":
-  //   //     return chalk.gray(coloredCard);
-  //   //   case "brown":
-  //   //     return chalk.hex("#A52A2A")(coloredCard); // Custom brown
-  //   //   case "blue":
-  //   //     return chalk.blue(coloredCard);
-  //   //   case "dark green":
-  //   //     return chalk.green(coloredCard);
-  //   //   default:
-  //   //     return coloredCard;
-  //   return
-  //     coloredCard;
-  //   };
-  // }
-
+  // Helper method to format a card for the grid display with color
   formatCard(card) {
     const suitLetter = card.suit[0]; // First letter of the suit
     const rank = card.rank;
     const color = card.color.toLowerCase();
 
     let coloredCard = `${rank}${suitLetter}`;
-
-    const colorMap = {
-      yellow: "yellow",
-      pink: "#FFC0CB", // Hex for pink
-      white: "white",
-      orange: "#FFA500", // Hex for orange
-      purple: "purple",
-      red: "red",
-      "dark grey": "gray",
-      brown: "#A52A2A", // Hex for brown
-      blue: "blue",
-      "dark green": "green",
-    };
-
-    // Return JSX for rendering in React:
-    return (
-      <span style={{ color: colorMap[color] || "black" }}>{coloredCard}</span>
-    );
+    switch (color) {
+      case "yellow":
+        return chalk.yellow(coloredCard);
+      case "pink":
+        return chalk.hex("#FFC0CB")(coloredCard); // Chalk doesn't have default pink
+      case "white":
+        return chalk.white(coloredCard);
+      case "orange":
+        return chalk.hex("#FFA500")(coloredCard); // Chalk doesn't have default orange
+      case "purple":
+        return chalk.magenta(coloredCard);
+      case "red":
+        return chalk.red(coloredCard);
+      case "dark grey":
+        return chalk.gray(coloredCard);
+      case "brown":
+        return chalk.hex("#A52A2A")(coloredCard); // Custom brown
+      case "blue":
+        return chalk.blue(coloredCard);
+      case "dark green":
+        return chalk.green(coloredCard);
+      default:
+        return coloredCard;
+        return;
+        coloredCard;
+    }
   }
 
   // Method to return the state of the play area grid

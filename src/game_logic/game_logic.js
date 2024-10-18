@@ -251,41 +251,29 @@ export class Game {
     }
   }
 
-  // Start the game and manage turns with delay between turns
-  async startGame(updateUI) {
+  // Start the game and manage turns
+  startGame() {
     this.setupGame(); // Setup the game
 
     // Run the game loop until the deck is empty
     while (!this.gameOver) {
-      // Run one turn of the game
       this.takeTurn();
-
-      // Capture game state and update UI
-      updateUI(this.getCurrentGameState());
-
-      // Add delay between turns to simulate real-time updates (1 second here)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Check if the deck is empty after each player's turn
       if (this.deck.cards.length === 0) {
         console.log("The deck is empty. The game is over.");
         this.gameOver = true;
+      } else {
+        // Proceed to the next player's turn
+        this.nextTurn();
       }
-
-      // Move to the next player
-      this.nextTurn();
     }
 
     console.log("Game Over!");
     this.showGameState(); // Display the final state of the game
     this.scoreGame(); // Calculate and display the scores
-
-    // Return the final state after the game is over
-    return {
-      finalScores: this.players.map((player) => player.score),
-      snapshots: this.snapshots,
-      actions: this.actions,
-    };
+    const finalScores = this.players.map((player) => player.score);
+    return [finalScores, this.snapshots, this.actions];
   }
 
   getCurrentGameState() {

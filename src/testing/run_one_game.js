@@ -8,6 +8,6 @@ const [scores, snapshots, actions] = game.startGame();
 console.log("Results");
 console.log("Final scores:", scores);
 
-console.log("Snapshots:", snapshots);
-// console.log(JSON.stringify(snapshots[0], null, 2));
-console.log(JSON.stringify(actions[1], null, 2));
+// console.log("Snapshots:", snapshots);
+// // console.log(JSON.stringify(snapshots[0], null, 2));
+// console.log(JSON.stringify(actions[1], null, 2));
